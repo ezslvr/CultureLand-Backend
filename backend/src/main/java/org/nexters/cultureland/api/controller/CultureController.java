@@ -1,5 +1,6 @@
 package org.nexters.cultureland.api.controller;
 
+import org.apache.tomcat.util.http.parser.MediaType;
 import org.modelmapper.ModelMapper;
 import org.nexters.cultureland.api.dto.CultureDetailDto;
 import org.nexters.cultureland.api.dto.CultureIdImgDto;
@@ -10,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping(path= "/cultureInfos")
+@RequestMapping(path= "/cultureInfos",produces = MediaTypes.HAL_JSON_UTF8_VALUE)
+
 public class CultureController {
 
     private final int PAGE_SIZE = 5;
@@ -29,13 +32,13 @@ public class CultureController {
     ///cultureInfos?category={category}&sort={sort}&page={page} 문화생활 전체 목록 조회(기본값: 최신순(new)), 카테고리에 맞는 문화생활 조회
     @GetMapping
     public ResponseMessage readCultures(@RequestParam(value = "category", required = false, defaultValue = "") String category,
+                                        @RequestParam(value = "sort", required = false, defaultValue = "new") String sort,
                                         @RequestParam(value = "page", required = false, defaultValue = "0") int page){
 
         ResponseMessage responseMessage = ResponseMessage.getOkResponseMessage();
 
-/*        Pageable pageable = sort.equals("new") ? PageRequest.of(page, PAGE_SIZE,new Sort(Sort.Direction.DESC,"startDate"))
-                :  PageRequest.of(page, PAGE_SIZE,new Sort(Sort.Direction.ASC,"id"));*/
-        Pageable pageable =  PageRequest.of(page, PAGE_SIZE,new Sort(Sort.Direction.DESC,"startDate"));
+        Pageable pageable = sort.equals("new") ? PageRequest.of(page, PAGE_SIZE,new Sort(Sort.Direction.DESC,"startDate"))
+                :  PageRequest.of(page, PAGE_SIZE,new Sort(Sort.Direction.ASC,"id"));
 
         //id,imgUrl 전체 목록 조회
         if(category.equals("")) {
@@ -51,8 +54,9 @@ public class CultureController {
     }
 
     //검색어`title`에 맞는 문화생활 조회
-    @GetMapping("/title/{title}")
-    public ResponseMessage readListByTitle(@PathVariable("title") String title) {
+    @PostMapping("/title")
+    public ResponseMessage readListByTitle(@RequestParam(value ="title", required = false, defaultValue = "") String title) {
+        System.out.println("title = " + title);
         ResponseMessage responseMessage = ResponseMessage.getOkResponseMessage();
         List<CultureIdImgDto> cultureRawDatas = cultureService.getBySearch(title);
         responseMessage.setMessage(cultureRawDatas);
